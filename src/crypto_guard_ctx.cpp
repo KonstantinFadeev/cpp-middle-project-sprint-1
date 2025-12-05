@@ -1,6 +1,7 @@
 #include "crypto_guard_ctx.h"
 #include <array>
 #include <iomanip>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <sstream>
 #include <stdexcept>
@@ -11,6 +12,17 @@ namespace CryptoGuard {
 namespace {
 
 constexpr size_t BUFFER_SIZE = 4096;
+
+std::string GetOpenSSLErrorString() {
+    unsigned long errCode = ERR_get_error();
+    if (errCode == 0) {
+        return "Unknown OpenSSL error";
+    }
+
+    char errorBuffer[256];
+    ERR_error_string_n(errCode, errorBuffer, sizeof(errorBuffer));
+    return std::string(errorBuffer);
+}
 
 struct CipherCtxDeleter {
     void operator()(EVP_CIPHER_CTX *ctx) const {
@@ -63,7 +75,7 @@ public:
                                     static_cast<int>(password.size()), 1, params.key.data(), params.iv.data());
 
         if (result == 0) {
-            throw std::runtime_error("Failed to create a key from password");
+            throw std::runtime_error("Failed to create a key from password: " + GetOpenSSLErrorString());
         }
 
         return params;
@@ -85,7 +97,7 @@ public:
         }
 
         if (EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_cbc(), nullptr, params.key.data(), params.iv.data()) != 1) {
-            throw std::runtime_error("Failed to initialize encryption");
+            throw std::runtime_error("Failed to initialize encryption: " + GetOpenSSLErrorString());
         }
 
         std::vector<unsigned char> inBuffer(BUFFER_SIZE);
@@ -113,7 +125,7 @@ public:
 
         int finalLen = 0;
         if (EVP_EncryptFinal_ex(ctx.get(), outBuffer.data(), &finalLen) != 1) {
-            throw std::runtime_error("Failed to finalize encryption");
+            throw std::runtime_error("Failed to finalize encryption: " + GetOpenSSLErrorString());
         }
 
         if (finalLen > 0) {
@@ -143,7 +155,7 @@ public:
         }
 
         if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_cbc(), nullptr, params.key.data(), params.iv.data()) != 1) {
-            throw std::runtime_error("Failed to initialize decryption");
+            throw std::runtime_error("Failed to initialize decryption: " + GetOpenSSLErrorString());
         }
 
         std::vector<unsigned char> inBuffer(BUFFER_SIZE);
@@ -171,7 +183,8 @@ public:
 
         int finalLen = 0;
         if (EVP_DecryptFinal_ex(ctx.get(), outBuffer.data(), &finalLen) != 1) {
-            throw std::runtime_error("Failed to finalize decryption (possibly wrong password or corrupted data)");
+            throw std::runtime_error("Failed to finalize decryption (possibly wrong password or corrupted data): " +
+                                     GetOpenSSLErrorString());
         }
 
         if (finalLen > 0) {
@@ -195,7 +208,7 @@ public:
         }
 
         if (EVP_DigestInit_ex(ctx.get(), EVP_sha256(), nullptr) != 1) {
-            throw std::runtime_error("Failed to initialize SHA-256");
+            throw std::runtime_error("Failed to initialize SHA-256: " + GetOpenSSLErrorString());
         }
 
         std::vector<unsigned char> buffer(BUFFER_SIZE);
@@ -213,7 +226,7 @@ public:
         std::array<unsigned char, EVP_MAX_MD_SIZE> hash;
         unsigned int hashLen = 0;
         if (EVP_DigestFinal_ex(ctx.get(), hash.data(), &hashLen) != 1) {
-            throw std::runtime_error("Failed to finalize digest");
+            throw std::runtime_error("Failed to finalize digest: " + GetOpenSSLErrorString());
         }
 
         std::ostringstream oss;
