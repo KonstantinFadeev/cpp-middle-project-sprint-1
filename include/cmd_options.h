@@ -40,6 +40,7 @@ private:
     std::string outputFile_;
     std::string password_;
 
+    std::string commandDescription_;
     boost::program_options::options_description desc_;
 };
 

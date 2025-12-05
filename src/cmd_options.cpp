@@ -23,12 +23,12 @@ namespace CryptoGuard {
 ProgramOptions::ProgramOptions() : desc_("Allowed options") {
     namespace po = boost::program_options;
 
-    std::string commandDesc = std::string("Command to execute: ") + std::string(CMD_ENCRYPT) + ", " +
-                              std::string(CMD_DECRYPT) + ", or " + std::string(CMD_CHECKSUM);
+    commandDescription_ = std::string("Command to execute: ") + std::string(CMD_ENCRYPT) + ", " +
+                          std::string(CMD_DECRYPT) + ", or " + std::string(CMD_CHECKSUM);
 
     desc_.add_options()(ARG_HELP.data(), "Display help message and list available options")(
         ARG_COMMAND.data(), po::value<std::string>()->required(),
-        commandDesc.c_str())(ARG_INPUT.data(), po::value<std::string>()->required(), "Path to the input file")(
+        commandDescription_.c_str())(ARG_INPUT.data(), po::value<std::string>()->required(), "Path to the input file")(
         ARG_OUTPUT.data(), po::value<std::string>(), "Path to the output file (required for encrypt/decrypt)")(
         ARG_PASSWORD.data(), po::value<std::string>(),
         "Password for encryption/decryption (required for encrypt/decrypt)");
