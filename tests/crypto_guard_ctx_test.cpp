@@ -3,7 +3,6 @@
 #include <sstream>
 #include <string>
 
-// Тесты для метода EncryptFile
 TEST(CryptoGuardCtx, EncryptFile_SuccessfulEncryption) {
     CryptoGuard::CryptoGuardCtx ctx;
 
@@ -13,23 +12,20 @@ TEST(CryptoGuardCtx, EncryptFile_SuccessfulEncryption) {
 
     EXPECT_NO_THROW(ctx.EncryptFile(input, output, "test_password"));
 
-    // Проверяем, что зашифрованные данные не пусты
     std::string encrypted = output.str();
     EXPECT_FALSE(encrypted.empty());
 
-    // Проверяем, что зашифрованные данные отличаются от исходных
     EXPECT_NE(encrypted, plaintext);
 }
 
 TEST(CryptoGuardCtx, EncryptFile_EmptyInput) {
     CryptoGuard::CryptoGuardCtx ctx;
 
-    std::stringstream input("");  // Пустой поток
+    std::stringstream input("");
     std::stringstream output;
 
     EXPECT_NO_THROW(ctx.EncryptFile(input, output, "password"));
 
-    // Даже для пустого ввода должны быть данные (padding)
     std::string encrypted = output.str();
     EXPECT_FALSE(encrypted.empty());
 }
@@ -40,7 +36,6 @@ TEST(CryptoGuardCtx, EncryptFile_ThrowsOnBadInputStream) {
     std::stringstream input("test data");
     std::stringstream output;
 
-    // Делаем входной поток невалидным
     input.setstate(std::ios::badbit);
 
     ASSERT_THROW(ctx.EncryptFile(input, output, "password"), std::runtime_error);
@@ -52,7 +47,6 @@ TEST(CryptoGuardCtx, EncryptFile_ThrowsOnBadOutputStream) {
     std::stringstream input("test data");
     std::stringstream output;
 
-    // Делаем выходной поток невалидным
     output.setstate(std::ios::badbit);
 
     ASSERT_THROW(ctx.EncryptFile(input, output, "password"), std::runtime_error);
@@ -61,7 +55,6 @@ TEST(CryptoGuardCtx, EncryptFile_ThrowsOnBadOutputStream) {
 TEST(CryptoGuardCtx, EncryptFile_LargeData) {
     CryptoGuard::CryptoGuardCtx ctx;
 
-    // Создаём большой текст (больше одного блока)
     std::string largeText(10000, 'A');
     std::stringstream input(largeText);
     std::stringstream output;
@@ -73,7 +66,6 @@ TEST(CryptoGuardCtx, EncryptFile_LargeData) {
     EXPECT_NE(encrypted, largeText);
 }
 
-// Тесты для метода DecryptFile
 TEST(CryptoGuardCtx, DecryptFile_SuccessfulDecryption) {
     CryptoGuard::CryptoGuardCtx ctx;
 
@@ -81,14 +73,11 @@ TEST(CryptoGuardCtx, DecryptFile_SuccessfulDecryption) {
     std::stringstream encryptInput(original);
     std::stringstream encrypted;
 
-    // Сначала шифруем
     ctx.EncryptFile(encryptInput, encrypted, "my_password");
 
-    // Теперь дешифруем
     std::stringstream decrypted;
     ctx.DecryptFile(encrypted, decrypted, "my_password");
 
-    // Проверяем, что получили исходное сообщение
     EXPECT_EQ(decrypted.str(), original);
 }
 
@@ -100,13 +89,10 @@ TEST(CryptoGuardCtx, DecryptFile_RoundTrip) {
     std::stringstream encrypted;
     std::stringstream decrypted;
 
-    // Encrypt
     EXPECT_NO_THROW(ctx.EncryptFile(input1, encrypted, "password123"));
 
-    // Decrypt
     EXPECT_NO_THROW(ctx.DecryptFile(encrypted, decrypted, "password123"));
 
-    // Verify
     EXPECT_EQ(decrypted.str(), original);
 }
 
@@ -117,10 +103,8 @@ TEST(CryptoGuardCtx, DecryptFile_ThrowsOnWrongPassword) {
     std::stringstream input(original);
     std::stringstream encrypted;
 
-    // Шифруем с одним паролем
     ctx.EncryptFile(input, encrypted, "correct_password");
 
-    // Пытаемся дешифровать с другим паролем
     std::stringstream decrypted;
     ASSERT_THROW(ctx.DecryptFile(encrypted, decrypted, "wrong_password"), std::runtime_error);
 }
@@ -136,7 +120,6 @@ TEST(CryptoGuardCtx, DecryptFile_ThrowsOnBadInputStream) {
     ASSERT_THROW(ctx.DecryptFile(input, output, "password"), std::runtime_error);
 }
 
-// Тесты для метода CalculateChecksum
 TEST(CryptoGuardCtx, CalculateChecksum_EmptyInput) {
     CryptoGuard::CryptoGuardCtx ctx;
 
@@ -144,7 +127,6 @@ TEST(CryptoGuardCtx, CalculateChecksum_EmptyInput) {
 
     std::string checksum = ctx.CalculateChecksum(input);
 
-    // SHA-256 хеш пустой строки (известное значение)
     EXPECT_EQ(checksum, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 }
 
@@ -155,7 +137,6 @@ TEST(CryptoGuardCtx, CalculateChecksum_KnownValue) {
 
     std::string checksum = ctx.CalculateChecksum(input);
 
-    // SHA-256 хеш строки "hello"
     EXPECT_EQ(checksum, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
 }
 
@@ -169,7 +150,6 @@ TEST(CryptoGuardCtx, CalculateChecksum_SameInputSameOutput) {
     std::string checksum1 = ctx.CalculateChecksum(input1);
     std::string checksum2 = ctx.CalculateChecksum(input2);
 
-    // Одинаковые данные должны давать одинаковый хеш
     EXPECT_EQ(checksum1, checksum2);
 }
 
@@ -182,7 +162,6 @@ TEST(CryptoGuardCtx, CalculateChecksum_DifferentInputDifferentOutput) {
     std::string checksum1 = ctx.CalculateChecksum(input1);
     std::string checksum2 = ctx.CalculateChecksum(input2);
 
-    // Разные данные должны давать разные хеши
     EXPECT_NE(checksum1, checksum2);
 }
 
@@ -204,6 +183,5 @@ TEST(CryptoGuardCtx, CalculateChecksum_LargeData) {
     std::string checksum;
     EXPECT_NO_THROW(checksum = ctx.CalculateChecksum(input));
 
-    // SHA-256 всегда возвращает 64 hex символа (32 байта = 256 бит)
     EXPECT_EQ(checksum.length(), 64);
 }
