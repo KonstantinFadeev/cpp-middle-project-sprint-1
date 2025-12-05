@@ -17,6 +17,10 @@ public:
         CHECKSUM,
     };
 
+    static constexpr std::string_view CMD_ENCRYPT = "encrypt";
+    static constexpr std::string_view CMD_DECRYPT = "decrypt";
+    static constexpr std::string_view CMD_CHECKSUM = "checksum";
+
     void Parse(int argc, char *argv[]);
 
     COMMAND_TYPE GetCommand() const { return command_; }
@@ -27,15 +31,16 @@ public:
 private:
     COMMAND_TYPE command_;
     const std::unordered_map<std::string_view, COMMAND_TYPE> commandMapping_ = {
-        {"encrypt", ProgramOptions::COMMAND_TYPE::ENCRYPT},
-        {"decrypt", ProgramOptions::COMMAND_TYPE::DECRYPT},
-        {"checksum", ProgramOptions::COMMAND_TYPE::CHECKSUM},
+        {CMD_ENCRYPT, ProgramOptions::COMMAND_TYPE::ENCRYPT},
+        {CMD_DECRYPT, ProgramOptions::COMMAND_TYPE::DECRYPT},
+        {CMD_CHECKSUM, ProgramOptions::COMMAND_TYPE::CHECKSUM},
     };
 
     std::string inputFile_;
     std::string outputFile_;
     std::string password_;
 
+    std::string commandDescription_;
     boost::program_options::options_description desc_;
 };
 
